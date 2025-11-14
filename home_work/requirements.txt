@@ -2,3 +2,4 @@ pandas
 requests
 pydantic
 sqlalchemy
+seaborn
