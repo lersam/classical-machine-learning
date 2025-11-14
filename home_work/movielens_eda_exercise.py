@@ -17,14 +17,14 @@ engine = create_engine("sqlite:///movielens.db")
 Base.metadata.create_all(engine)
 
 
-def download_movielens_data(zip_path: Path, reload=False) -> Union[Path, None]:
+def download_movielens_data(zip_path: Path, reload=False) -> bool:
     """Downloads the MovieLens latest dataset zip file to the specified path.
     If the file already exists and reload is False, it will not download again."""
 
     movielens_url = "https://files.grouplens.org/datasets/movielens/ml-latest.zip"
 
     if zip_path.exists() and not reload:
-        return zip_path
+        return True
 
     try:
         response = requests.get(movielens_url, stream=True)
@@ -34,11 +34,11 @@ def download_movielens_data(zip_path: Path, reload=False) -> Union[Path, None]:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        return zip_path
+        return True
 
     except requests.exceptions.RequestException as e:
         print(f"**❌ Error during download:** {e}")
-        return None
+        return False
 
 
 def load_ml_csvs_from_zip(zip_path: Path, models_struct: list) -> dict:
@@ -50,12 +50,15 @@ def load_ml_csvs_from_zip(zip_path: Path, models_struct: list) -> dict:
     return laded_models
 
 
-if __name__ == "__main__":
-    zip_path = Path(Path(__file__).parent, "local_data/ml-latest.zip")
+def saving_to_database(ml_csvs_models):
+    if __name__ == "__main__":
+        zip_path = Path(Path(__file__).parent, "local_data/ml-latest.zip")
 
-    movielen_path = download_movielens_data(zip_path=zip_path)
-    if movielen_path is None:
-        exit(1)
+        load_status = download_movielens_data(zip_path=zip_path)
+        if load_status is None:
+            exit(1)
 
-    models = load_ml_csvs_from_zip(zip_path=zip_path,
-                                   models_struct=[LinksConfiguration, TagConfiguration, MovieConfiguration])
+        ml_csvs_models: dict = load_ml_csvs_from_zip(zip_path=zip_path,
+                                                     models_struct=[LinksConfiguration, TagConfiguration,
+                                                                    MovieConfiguration])
+    saving_to_database(ml_csvs_models)
