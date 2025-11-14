@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer
 
-from . import Base
 from .support import DatasetConfiguration
+from ..database import Base
+
 
 # ============================================================================
 # SQLAlchemy ORM Model

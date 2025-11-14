@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Float, PrimaryKeyConstraint
 
-from . import Base
 from .support import DatasetConfiguration
+from ..database import Base
 
 
 # ============================================================================

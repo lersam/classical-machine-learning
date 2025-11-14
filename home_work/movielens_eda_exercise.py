@@ -6,18 +6,15 @@ import pandas as pd
 from pathlib import Path
 from zipfile import ZipFile
 from io import BytesIO
-from sqlalchemy import create_engine
-
-from models import Base
-from models.link import LinksConfiguration
-from models.movie import MovieConfiguration
-from models.tag import TagConfiguration
-from models.rating import RatingsConfiguration
+from home_work.database import engine, Base
+from home_work.models.link import LinksConfiguration
+from home_work.models.movie import MovieConfiguration
+from home_work.models.rating import RatingsConfiguration
+from home_work.models.tag import TagConfiguration
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
 
-engine = create_engine("sqlite:///movielens.db")
 Base.metadata.create_all(engine)
 
 
@@ -72,6 +69,7 @@ def saving_to_database(ml_models: dict):
 
     logger.debug("finished saving all models to database")
 
+
 if __name__ == "__main__":
     zip_path = Path(Path(__file__).parent, "local_data/ml-latest.zip")
 
@@ -85,4 +83,3 @@ if __name__ == "__main__":
                                                      RatingsConfiguration, MovieConfiguration
                                                  ])
     saving_to_database(ml_csvs_models)
-    logger.debug("All done!")

@@ -5,15 +5,15 @@ import logging
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Optional
+from database import engine
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
 
-def perform_eda_with_seaborn(engine, plots_dir: Optional[Path] = None, min_ratings: int = 50):
+def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int = 50):
     """Performs exploratory data analysis using seaborn on the MovieLens DB.
 
     Parameters
-    - engine: SQLAlchemy engine instance (required).
     - plots_dir: optional Path to save plots. Defaults to a `plots/` folder next to this file.
     - min_ratings: minimum number of ratings for a movie to be considered 'popular'.
     """
@@ -127,3 +127,15 @@ def perform_eda_with_seaborn(engine, plots_dir: Optional[Path] = None, min_ratin
         logger.debug('Saved plot: %s', p4)
 
     logger.info('EDA finished. Plots saved to %s', plots_dir)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Perform EDA on MovieLens data using seaborn")
+    parser.add_argument("--plots-dir", type=Path, default=None, help="Directory to save plots")
+    parser.add_argument("--min-ratings", type=int, default=50, help="Minimum ratings for a movie to be considered popular (default: 50)")
+
+    args = parser.parse_args()
+
+    perform_eda_with_seaborn(plots_dir=args.plots_dir, min_ratings=args.min_ratings)
