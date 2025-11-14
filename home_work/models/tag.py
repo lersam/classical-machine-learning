@@ -1,9 +1,7 @@
 from sqlalchemy import Column, Integer, String, PrimaryKeyConstraint
-from sqlalchemy.orm import declarative_base
 
+from . import Base
 from .support import DatasetConfiguration
-
-Base = declarative_base()
 
 
 # ============================================================================

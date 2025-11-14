@@ -1,17 +1,17 @@
 import requests
 import pandas as pd
 
-from typing import Union
 from pathlib import Path
 from zipfile import ZipFile
 from io import BytesIO
 
 from sqlalchemy import create_engine
 
+from models import Base
 from models.link import LinksConfiguration
 from models.movie import MovieConfiguration
 from models.tag import TagConfiguration
-from models.rating import Base
+from models.rating import RatingsConfiguration
 
 engine = create_engine("sqlite:///movielens.db")
 Base.metadata.create_all(engine)
@@ -50,15 +50,21 @@ def load_ml_csvs_from_zip(zip_path: Path, models_struct: list) -> dict:
     return laded_models
 
 
-def saving_to_database(ml_csvs_models):
-    if __name__ == "__main__":
-        zip_path = Path(Path(__file__).parent, "local_data/ml-latest.zip")
+def saving_to_database(ml_models: dict):
+    for m_name, m_date in ml_models.items():
+        m_date.to_sql(m_name, engine, if_exists='replace')
 
-        load_status = download_movielens_data(zip_path=zip_path)
-        if load_status is None:
-            exit(1)
 
-        ml_csvs_models: dict = load_ml_csvs_from_zip(zip_path=zip_path,
-                                                     models_struct=[LinksConfiguration, TagConfiguration,
-                                                                    MovieConfiguration])
+if __name__ == "__main__":
+    zip_path = Path(Path(__file__).parent, "local_data/ml-latest.zip")
+
+    load_status = download_movielens_data(zip_path=zip_path)
+    if load_status is None:
+        exit(1)
+
+    ml_csvs_models: dict = load_ml_csvs_from_zip(zip_path=zip_path,
+                                                 models_struct=[
+                                                     LinksConfiguration, TagConfiguration,
+                                                     RatingsConfiguration, MovieConfiguration
+                                                 ])
     saving_to_database(ml_csvs_models)

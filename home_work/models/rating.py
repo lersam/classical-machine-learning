@@ -1,9 +1,7 @@
 from sqlalchemy import Column, Integer, Float, PrimaryKeyConstraint
-from sqlalchemy.orm import declarative_base
 
+from . import Base
 from .support import DatasetConfiguration
-
-Base = declarative_base()
 
 
 # ============================================================================
@@ -28,4 +26,4 @@ class Rating(Base):
 # Dataset Configuration Dictionaries
 # ============================================================================
 RatingsConfiguration = DatasetConfiguration(name="ratings", inner_path="ml-latest/ratings.csv",
-                                            columns=['user_id', 'movie_id', 'rating', 'timestamp'])
+                                            columns=['userId', 'movieId', 'rating', 'timestamp'])

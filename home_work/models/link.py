@@ -1,10 +1,7 @@
 from sqlalchemy import Column, Integer
-from sqlalchemy.orm import declarative_base
 
+from . import Base
 from .support import DatasetConfiguration
-
-Base = declarative_base()
-
 
 # ============================================================================
 # SQLAlchemy ORM Model
