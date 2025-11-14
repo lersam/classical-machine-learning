@@ -1,2 +1,4 @@
 pandas
 requests
+pydantic
+sqlalchemy
