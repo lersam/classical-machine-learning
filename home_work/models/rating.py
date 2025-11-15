@@ -12,13 +12,13 @@ class Rating(Base):
     """SQLAlchemy ORM model for ratings table."""
     __tablename__ = "ratings"
 
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
     movie_id = Column(Integer, primary_key=True)
-    rating = Column(Float, nullable=False)
+    rating = Column(Float, primary_key=True)
     timestamp = Column(Integer, nullable=False)
 
     __table_args__ = (
-        PrimaryKeyConstraint("user_id", "movie_id"),
+        PrimaryKeyConstraint("rating","movie_id"),
     )
 
 
