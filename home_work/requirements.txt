@@ -3,3 +3,5 @@ requests
 pydantic
 sqlalchemy
 seaborn
+pymysql
+cryptography
