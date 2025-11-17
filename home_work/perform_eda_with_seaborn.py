@@ -1,10 +1,3 @@
-import numpy as np
-import warnings
-
-# Patch for sweetviz/numpy VisibleDeprecationWarning issue
-if not hasattr(np, "VisibleDeprecationWarning"):
-    warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
-
 import pandas as pd
 
 import logging
@@ -43,25 +36,6 @@ def perform_eda_with(plots_dir: Optional[Path] = None):
     except Exception as e:
         logger.exception("Failed to read tables from DB: %s", e)
         return
-
-    # Normalize common column names (camelCase -> snake_case)
-    def _normalize(df: pd.DataFrame) -> pd.DataFrame:
-        rename_map = {}
-        for c in df.columns:
-            if c == 'userId' or c.lower() == 'userid':
-                rename_map[c] = 'user_id'
-            if c == 'movieId' or c.lower() == 'movieid':
-                rename_map[c] = 'movie_id'
-            if c == 'imdbId':
-                rename_map[c] = 'imdb_id'
-            if c == 'tmdbId':
-                rename_map[c] = 'tmdb_id'
-        if rename_map:
-            df = df.rename(columns=rename_map)
-        return df
-
-    ratings = _normalize(ratings)
-    movies = _normalize(movies)
 
     # Convert rating column to numeric
     if 'rating' in ratings.columns:
