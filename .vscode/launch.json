@@ -10,7 +10,8 @@
             "type": "debugpy",
             "request": "launch",
             "module": "home_work.movielens_eda_exercise",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
         }
     ]
 }

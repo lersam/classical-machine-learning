@@ -11,6 +11,7 @@ from home_work.models.link import LinksConfiguration
 from home_work.models.movie import MovieConfiguration
 from home_work.models.rating import RatingsConfiguration
 from home_work.models.tag import TagConfiguration
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
@@ -50,37 +51,71 @@ def load_ml_csvs_from_zip(zip_path: Path, models_struct: list) -> dict:
     """Loads specified CSV files from the MovieLens zip archive into pandas DataFrames."""
 
     logger.debug("start load csvs from zip: %s", zip_path)
-    z = ZipFile(BytesIO(zip_path.read_bytes()))
 
     laded_models = {}
     for single_model in models_struct:
-        laded_models[single_model.name] = pd.read_csv(z.open(single_model.inner_path), names=single_model.columns)
+        laded_models[single_model.name] = load_single_csv_from_zip(
+            zip_path=zip_path,
+            inner_path=single_model.inner_path,
+            columns=single_model.columns
+        )
         logger.debug("loaded model: %s", single_model.name)
 
     logger.debug("finished loading all models")
     return laded_models
 
+def load_single_csv_from_zip(zip_path: Path, inner_path: str, columns: list) -> pd.DataFrame:
+    """Loads a single CSV file from the MovieLens zip archive into a pandas DataFrame."""
 
-def saving_to_database(ml_models: dict):
-    """Saves the loaded MovieLens DataFrames into the SQLite database."""
+    logger.debug("start load single csv from zip: %s", zip_path)
+    z = ZipFile(BytesIO(zip_path.read_bytes()))
+
+    df = pd.read_csv(z.open(inner_path), names=columns, low_memory=False)
+    logger.debug("loaded single csv: %s", inner_path)
+
+    return df
+
+def saving_to_database(m_name: str, m_date: pd.DataFrame):
+    """Saves the loaded MovieLens DataFrames into the database."""
     logger.debug("start saving models to database")
-    for m_name, m_date in ml_models.items():
-        m_date.to_sql(m_name, engine, if_exists='replace')
-        logger.debug("saved model to database: %s", m_name)
+    m_date.to_sql(m_name, engine, if_exists='replace')
+    logger.debug("saved model to database: %s", m_name)
 
-    logger.debug("finished saving all models to database")
-
+def process_model(model_cls):
+    name = model_cls.name
+    try:
+        logger.debug("start processing model: %s", name)
+        df = load_single_csv_from_zip(zip_path=zip_path,
+                                        inner_path=model_cls.inner_path,
+                                        columns=model_cls.columns)
+        saving_to_database(name, df)
+        logger.debug("finished processing model: %s", name)
+    except Exception as e:
+        logger.exception("error processing model %s: %s", name, e)
+        raise
 
 if __name__ == "__main__":
     zip_path = Path(Path(__file__).parent, "local_data/ml-latest-small.zip")
 
     load_status = download_movielens_data(zip_path=zip_path)
-    if load_status is None:
+
+    if not load_status:
         exit(1)
 
-    ml_csvs_models: dict = load_ml_csvs_from_zip(zip_path=zip_path,
-                                                 models_struct=[
-                                                     LinksConfiguration, TagConfiguration,
-                                                     RatingsConfiguration, MovieConfiguration
-                                                 ])
-    saving_to_database(ml_csvs_models)
+    # process each model in its own thread: load single csv from zip then save to db
+    models = [
+        # MovieConfiguration,
+        RatingsConfiguration
+        # LinksConfiguration,
+        # TagConfiguration
+        ]
+
+    max_workers = min(4, max(1, len(models)))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_name = {executor.submit(process_model, m): m.name for m in models}
+        for fut in as_completed(future_to_name):
+            name = future_to_name[fut]
+            try:
+                fut.result()
+            except Exception as exc:
+                logger.exception("thread failed for %s: %s", name, exc)
