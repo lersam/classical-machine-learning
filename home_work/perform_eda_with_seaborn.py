@@ -5,7 +5,7 @@ import logging
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Optional
-from database import engine
+from home_work.database import engine
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
@@ -25,8 +25,8 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
 
     try:
         with engine.connect() as conn:
-            tbls = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table'", conn)
-            tables = set(tbls['name'].tolist())
+            tbls = pd.read_sql_query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()", conn)
+            tables = set(tbls['TABLE_NAME'].tolist())
             if 'ratings' not in tables or 'movies' not in tables:
                 logger.error("Required tables 'ratings' and 'movies' not found in database. Found: %s", tables)
                 return
@@ -56,6 +56,10 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
 
     ratings = _normalize(ratings)
     movies = _normalize(movies)
+
+    # Convert rating column to numeric
+    if 'rating' in ratings.columns:
+        ratings['rating'] = pd.to_numeric(ratings['rating'], errors='coerce')
 
     # Basic stats
     logger.info("Ratings shape: %s", ratings.shape)
@@ -104,7 +108,10 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
     top20 = popular.sort_values('mean', ascending=False).head(20)
     if not top20.empty and 'title' in top20.columns:
         plt.figure(figsize=(10, 8))
-        sns.barplot(x='mean', y='title', data=top20, palette='viridis')
+        ax = sns.barplot(x='mean', y='title', data=top20, palette='viridis', hue='title')
+        # remove legend since hue is identical to y (keeps palette behavior without deprecation)
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
         plt.title(f'Top 20 Movies by Mean Rating (>={min_ratings} ratings)')
         plt.xlabel('Mean Rating')
         plt.tight_layout()
@@ -113,11 +120,30 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
         plt.close()
         logger.debug('Saved plot: %s', p3)
 
+    # Plot 3b: top 10 movies by average rating (with min counts)
+    top10 = popular.sort_values('mean', ascending=False).head(10)
+    if not top10.empty and 'title' in top10.columns:
+        plt.figure(figsize=(8, 6))
+        ax = sns.barplot(x='mean', y='title', data=top10, palette='coolwarm', hue='title')
+        # remove legend since hue is identical to y (keeps palette behavior without deprecation)
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
+        plt.title(f'Top 10 Movies by Mean Rating (>={min_ratings} ratings)')
+        plt.xlabel('Mean Rating')
+        plt.tight_layout()
+        p3b = plots_dir / 'top10_mean_rating.png'
+        plt.savefig(p3b)
+        plt.close()
+        logger.debug('Saved plot: %s', p3b)
+
     # Plot 4: top 20 most-rated movies
     top_rated = movie_stats.sort_values('count', ascending=False).head(20)
     if not top_rated.empty and 'title' in top_rated.columns:
         plt.figure(figsize=(10, 8))
-        sns.barplot(x='count', y='title', data=top_rated, palette='magma')
+        ax = sns.barplot(x='count', y='title', data=top_rated, palette='magma', hue='title')
+        # remove legend since hue is identical to y (keeps palette behavior without deprecation)
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
         plt.title('Top 20 Most-Rated Movies')
         plt.xlabel('Number of Ratings')
         plt.tight_layout()

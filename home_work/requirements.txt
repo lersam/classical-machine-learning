@@ -1,7 +1,0 @@
-pandas
-requests
-pydantic
-sqlalchemy
-seaborn
-pymysql
-cryptography
