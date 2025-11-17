@@ -7,6 +7,17 @@ from pathlib import Path
 from typing import Optional
 from home_work.database import engine
 
+# Try to import the modern profiling package (ydata-profiling) and fall back
+# to the older pandas_profiling namespace if available. If neither is installed
+# we'll skip generating profile reports and log a warning.
+try:
+    from ydata_profiling import ProfileReport  # type: ignore
+except Exception:
+    try:
+        from pandas_profiling import ProfileReport  # type: ignore
+    except Exception:
+        ProfileReport = None
+
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
 
@@ -61,96 +72,41 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
     if 'rating' in ratings.columns:
         ratings['rating'] = pd.to_numeric(ratings['rating'], errors='coerce')
 
-    # Basic stats
-    logger.info("Ratings shape: %s", ratings.shape)
-    logger.info("Movies shape: %s", movies.shape)
-    if 'rating' in ratings.columns:
-        logger.info("Ratings describe: %s", ratings['rating'].describe())
+    # Generate pandas-profiling / ydata-profiling reports if available
+    if ProfileReport is not None:
+        try:
+            logger.debug("Generating ProfileReport for ratings and movies (this may take a while)...")
+            # Ratings report (use minimal mode to keep memory usage reasonable)
+            ratings_report = ProfileReport(ratings, title="Ratings Profile", minimal=True)
+            p_ratings = plots_dir / 'ratings_profile.html'
+            ratings_report.to_file(p_ratings)
+            logger.info("Saved ratings profile report: %s", p_ratings)
 
-    # Plot 1: rating value counts
-    plt.figure(figsize=(8, 4))
-    sns.countplot(x='rating', data=ratings)
-    plt.title('Rating Counts')
-    plt.tight_layout()
-    p1 = plots_dir / 'rating_counts.png'
-    plt.savefig(p1)
-    plt.close()
-    logger.debug('Saved plot: %s', p1)
+            # Movies report
+            movies_report = ProfileReport(movies, title="Movies Profile", minimal=True)
+            p_movies = plots_dir / 'movies_profile.html'
+            movies_report.to_file(p_movies)
+            logger.info("Saved movies profile report: %s", p_movies)
 
-    # Plot 2: rating distribution histogram
-    plt.figure(figsize=(8, 4))
-    sns.histplot(ratings['rating'], bins=5, kde=False)
-    plt.title('Rating Distribution')
-    plt.tight_layout()
-    p2 = plots_dir / 'rating_distribution.png'
-    plt.savefig(p2)
-    plt.close()
-    logger.debug('Saved plot: %s', p2)
+            # Merged report when possible
+            if 'movie_id' in ratings.columns and ('movie_id' in movies.columns or 'movieId' in movies.columns):
+                # prepare a merged dataframe for profiling (include title when available)
+                if 'movie_id' in movies.columns:
+                    merge_cols = ['movie_id'] + ([ 'title' ] if 'title' in movies.columns else [])
+                    movies_for_merge_prof = movies[merge_cols]
+                else:
+                    movies_for_merge_prof = movies
 
-    # Compute per-movie stats (count and mean)
-    movie_stats = ratings.groupby('movie_id').agg(count=('rating', 'size'), mean=('rating', 'mean')).reset_index()
+                merged_prof = ratings.merge(movies_for_merge_prof, left_on='movie_id', right_on=movies_for_merge_prof.columns[0], how='left')
+                merged_report = ProfileReport(merged_prof, title="Merged Ratings+Movies Profile", minimal=True)
+                p_merged = plots_dir / 'merged_profile.html'
+                merged_report.to_file(p_merged)
+                logger.info("Saved merged profile report: %s", p_merged)
 
-    # Merge with movie titles when available
-    if 'movie_id' in movies.columns:
-        movies_for_merge = movies[['movie_id', 'title']] if 'title' in movies.columns else movies[['movie_id']]
-    elif 'movieId' in movies.columns:
-        movies_for_merge = movies[['movieId', 'title']].rename(columns={'movieId': 'movie_id'})
+        except Exception as e:
+            logger.exception("Failed to generate ProfileReport reports: %s", e)
     else:
-        movies_for_merge = None
-
-    if movies_for_merge is not None:
-        movie_stats = movie_stats.merge(movies_for_merge, on='movie_id', how='left')
-
-    # Filter popular movies
-    popular = movie_stats[movie_stats['count'] >= min_ratings]
-
-    # Plot 3: top 20 movies by average rating (with min counts)
-    top20 = popular.sort_values('mean', ascending=False).head(20)
-    if not top20.empty and 'title' in top20.columns:
-        plt.figure(figsize=(10, 8))
-        ax = sns.barplot(x='mean', y='title', data=top20, palette='viridis', hue='title')
-        # remove legend since hue is identical to y (keeps palette behavior without deprecation)
-        if ax.get_legend() is not None:
-            ax.get_legend().remove()
-        plt.title(f'Top 20 Movies by Mean Rating (>={min_ratings} ratings)')
-        plt.xlabel('Mean Rating')
-        plt.tight_layout()
-        p3 = plots_dir / 'top20_mean_rating.png'
-        plt.savefig(p3)
-        plt.close()
-        logger.debug('Saved plot: %s', p3)
-
-    # Plot 3b: top 10 movies by average rating (with min counts)
-    top10 = popular.sort_values('mean', ascending=False).head(10)
-    if not top10.empty and 'title' in top10.columns:
-        plt.figure(figsize=(8, 6))
-        ax = sns.barplot(x='mean', y='title', data=top10, palette='coolwarm', hue='title')
-        # remove legend since hue is identical to y (keeps palette behavior without deprecation)
-        if ax.get_legend() is not None:
-            ax.get_legend().remove()
-        plt.title(f'Top 10 Movies by Mean Rating (>={min_ratings} ratings)')
-        plt.xlabel('Mean Rating')
-        plt.tight_layout()
-        p3b = plots_dir / 'top10_mean_rating.png'
-        plt.savefig(p3b)
-        plt.close()
-        logger.debug('Saved plot: %s', p3b)
-
-    # Plot 4: top 20 most-rated movies
-    top_rated = movie_stats.sort_values('count', ascending=False).head(20)
-    if not top_rated.empty and 'title' in top_rated.columns:
-        plt.figure(figsize=(10, 8))
-        ax = sns.barplot(x='count', y='title', data=top_rated, palette='magma', hue='title')
-        # remove legend since hue is identical to y (keeps palette behavior without deprecation)
-        if ax.get_legend() is not None:
-            ax.get_legend().remove()
-        plt.title('Top 20 Most-Rated Movies')
-        plt.xlabel('Number of Ratings')
-        plt.tight_layout()
-        p4 = plots_dir / 'top20_most_rated.png'
-        plt.savefig(p4)
-        plt.close()
-        logger.debug('Saved plot: %s', p4)
+        logger.warning("ProfileReport package not available. Install 'ydata-profiling' to enable HTML profiling reports.")
 
     logger.info('EDA finished. Plots saved to %s', plots_dir)
 
