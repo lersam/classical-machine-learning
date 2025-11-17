@@ -1,22 +1,28 @@
+import numpy as np
+import warnings
+
+# Patch for sweetviz/numpy VisibleDeprecationWarning issue
+if not hasattr(np, "VisibleDeprecationWarning"):
+    warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
+
 import pandas as pd
-import seaborn as sns
+
 import logging
 import sweetviz as sv
-import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Optional
 from home_work.database import engine
+
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
 
-def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int = 50):
-    """Performs exploratory data analysis using seaborn on the MovieLens DB.
+
+def perform_eda_with(plots_dir: Optional[Path] = None):
+    """Performs exploratory data analysis on the MovieLens DB.
 
     Parameters
     - plots_dir: optional Path to save plots. Defaults to a `plots/` folder next to this file.
-    - min_ratings: minimum number of ratings for a movie to be considered 'popular'.
     """
-    logger.debug("start EDA with seaborn")
 
     if plots_dir is None:
         plots_dir = Path(__file__).parent / "plots"
@@ -24,7 +30,8 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
 
     try:
         with engine.connect() as conn:
-            tbls = pd.read_sql_query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()", conn)
+            tbls = pd.read_sql_query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()",
+                                     conn)
             tables = set(tbls['TABLE_NAME'].tolist())
             if 'ratings' not in tables or 'movies' not in tables:
                 logger.error("Required tables 'ratings' and 'movies' not found in database. Found: %s", tables)
@@ -84,7 +91,8 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
             else:
                 movies_for_merge_prof = movies
 
-            merged_prof = ratings.merge(movies_for_merge_prof, left_on='movie_id', right_on=movies_for_merge_prof.columns[0], how='left')
+            merged_prof = ratings.merge(movies_for_merge_prof, left_on='movie_id',
+                                        right_on=movies_for_merge_prof.columns[0], how='left')
             merged_report = sv.analyze(merged_prof)
             p_merged = plots_dir / 'merged_profile_sweetviz.html'
             merged_report.show_html(str(p_merged), open_browser=False)
@@ -99,10 +107,9 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Perform EDA on MovieLens data using seaborn")
+    parser = argparse.ArgumentParser(description="Perform EDA on MovieLens data")
     parser.add_argument("--plots-dir", type=Path, default=None, help="Directory to save plots")
-    parser.add_argument("--min-ratings", type=int, default=50, help="Minimum ratings for a movie to be considered popular (default: 50)")
 
     args = parser.parse_args()
 
-    perform_eda_with_seaborn(plots_dir=args.plots_dir, min_ratings=args.min_ratings)
+    perform_eda_with(plots_dir=args.plots_dir)

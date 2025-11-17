@@ -1,4 +1,4 @@
-numpy==2.3.3
+numpy
 matplotlib
 torch
 tensorflow
@@ -10,3 +10,4 @@ requests
 pydantic
 sqlalchemy
 sweetviz
+pymysql
