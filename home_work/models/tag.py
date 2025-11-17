@@ -11,19 +11,15 @@ from ..database import Base
 class Tag(Base):
     """SQLAlchemy ORM model for tags table."""
     __tablename__ = "tags"
-
-    user_id = Column(Integer, primary_key=True)
-    movie_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False)
+    movie_id = Column(Integer, nullable=False)
     tag = Column(String(255), nullable=False)
     timestamp = Column(Integer, nullable=False)
-
-    __table_args__ = (
-        PrimaryKeyConstraint("user_id", "movie_id", "tag"),
-    )
 
 
 # ============================================================================
 # Dataset Configuration Dictionaries
 # ============================================================================
-TagConfiguration = DatasetConfiguration(name="tag", inner_path="ml-latest/tags.csv",
+TagConfiguration = DatasetConfiguration(name="tag", inner_path="ml-latest-small/tags.csv",
                                         columns=["userId", "movieId", "tag", "timestamp"])

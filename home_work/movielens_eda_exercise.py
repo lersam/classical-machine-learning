@@ -22,7 +22,8 @@ def download_movielens_data(zip_path: Path, reload=False) -> bool:
     """Downloads the MovieLens latest dataset zip file to the specified path.
     If the file already exists and reload is False, it will not download again."""
 
-    movielens_url = "https://files.grouplens.org/datasets/movielens/ml-latest.zip"
+    # movielens_url = "https://files.grouplens.org/datasets/movielens/ml-latest.zip"
+    movielens_url = "http://files.grouplens.org/datasets/movielens/ml-latest-small.zip"
 
     logger.debug("start download: %s", movielens_url)
     if zip_path.exists() and not reload:
@@ -71,7 +72,7 @@ def saving_to_database(ml_models: dict):
 
 
 if __name__ == "__main__":
-    zip_path = Path(Path(__file__).parent, "local_data/ml-latest.zip")
+    zip_path = Path(Path(__file__).parent, "local_data/ml-latest-small.zip")
 
     load_status = download_movielens_data(zip_path=zip_path)
     if load_status is None:

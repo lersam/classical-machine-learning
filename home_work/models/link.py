@@ -11,8 +11,8 @@ from ..database import Base
 class Link(Base):
     """SQLAlchemy ORM model for links table."""
     __tablename__ = "links"
-
-    movie_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    movie_id = Column(Integer, nullable=True)
     imdb_id = Column(Integer, nullable=True)
     tmdb_id = Column(Integer, nullable=True)
 
@@ -21,5 +21,5 @@ class Link(Base):
 # Dataset Configuration Dictionaries
 # ============================================================================
 
-LinksConfiguration = DatasetConfiguration(name="links", inner_path="ml-latest/links.csv",
+LinksConfiguration = DatasetConfiguration(name="links", inner_path="ml-latest-small/links.csv",
                                           columns=["movieId", "imdbId", "tmdbId"])

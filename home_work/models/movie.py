@@ -20,5 +20,5 @@ class Movie(Base):
 # ============================================================================
 # Dataset Configuration Dictionaries
 # ============================================================================
-MovieConfiguration = DatasetConfiguration(name="movies", inner_path="ml-latest/movies.csv",
+MovieConfiguration = DatasetConfiguration(name="movies", inner_path="ml-latest-small/movies.csv",
                                           columns=["movieId", "title", "genres"])
