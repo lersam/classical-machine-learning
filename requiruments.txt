@@ -9,6 +9,4 @@ pandas
 requests
 pydantic
 sqlalchemy
-wheel
-ydata-profiling
-pandas_profiling
+sweetviz

@@ -1,23 +1,11 @@
 import pandas as pd
 import seaborn as sns
 import logging
-
+import sweetviz as sv
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Optional
 from home_work.database import engine
-
-# Try to import the modern profiling package (ydata-profiling) and fall back
-# to the older pandas_profiling namespace if available. If neither is installed
-# we'll skip generating profile reports and log a warning.
-try:
-    from ydata_profiling import ProfileReport  # type: ignore
-except Exception:
-    try:
-        from pandas_profiling import ProfileReport  # type: ignore
-    except Exception:
-        ProfileReport = None
-
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
 
@@ -72,41 +60,38 @@ def perform_eda_with_seaborn(plots_dir: Optional[Path] = None, min_ratings: int 
     if 'rating' in ratings.columns:
         ratings['rating'] = pd.to_numeric(ratings['rating'], errors='coerce')
 
-    # Generate pandas-profiling / ydata-profiling reports if available
-    if ProfileReport is not None:
-        try:
-            logger.debug("Generating ProfileReport for ratings and movies (this may take a while)...")
-            # Ratings report (use minimal mode to keep memory usage reasonable)
-            ratings_report = ProfileReport(ratings, title="Ratings Profile", minimal=True)
-            p_ratings = plots_dir / 'ratings_profile.html'
-            ratings_report.to_file(p_ratings)
-            logger.info("Saved ratings profile report: %s", p_ratings)
+    # Generate profiling reports using sweetviz if available
+    try:
+        logger.debug("Generating sweetviz reports for ratings and movies (this may take a while)...")
 
-            # Movies report
-            movies_report = ProfileReport(movies, title="Movies Profile", minimal=True)
-            p_movies = plots_dir / 'movies_profile.html'
-            movies_report.to_file(p_movies)
-            logger.info("Saved movies profile report: %s", p_movies)
+        # Ratings report
+        ratings_report = sv.analyze(ratings)
+        p_ratings = plots_dir / 'ratings_profile_sweetviz.html'
+        ratings_report.show_html(str(p_ratings), open_browser=False)
+        logger.info("Saved ratings sweetviz report: %s", p_ratings)
 
-            # Merged report when possible
-            if 'movie_id' in ratings.columns and ('movie_id' in movies.columns or 'movieId' in movies.columns):
-                # prepare a merged dataframe for profiling (include title when available)
-                if 'movie_id' in movies.columns:
-                    merge_cols = ['movie_id'] + ([ 'title' ] if 'title' in movies.columns else [])
-                    movies_for_merge_prof = movies[merge_cols]
-                else:
-                    movies_for_merge_prof = movies
+        # Movies report
+        movies_report = sv.analyze(movies)
+        p_movies = plots_dir / 'movies_profile_sweetviz.html'
+        movies_report.show_html(str(p_movies), open_browser=False)
+        logger.info("Saved movies sweetviz report: %s", p_movies)
 
-                merged_prof = ratings.merge(movies_for_merge_prof, left_on='movie_id', right_on=movies_for_merge_prof.columns[0], how='left')
-                merged_report = ProfileReport(merged_prof, title="Merged Ratings+Movies Profile", minimal=True)
-                p_merged = plots_dir / 'merged_profile.html'
-                merged_report.to_file(p_merged)
-                logger.info("Saved merged profile report: %s", p_merged)
+        # Merged report when possible (include title when available)
+        if 'movie_id' in ratings.columns and ('movie_id' in movies.columns or 'movieId' in movies.columns):
+            if 'movie_id' in movies.columns:
+                merge_cols = ['movie_id'] + (['title'] if 'title' in movies.columns else [])
+                movies_for_merge_prof = movies[merge_cols]
+            else:
+                movies_for_merge_prof = movies
 
-        except Exception as e:
-            logger.exception("Failed to generate ProfileReport reports: %s", e)
-    else:
-        logger.warning("ProfileReport package not available. Install 'ydata-profiling' to enable HTML profiling reports.")
+            merged_prof = ratings.merge(movies_for_merge_prof, left_on='movie_id', right_on=movies_for_merge_prof.columns[0], how='left')
+            merged_report = sv.analyze(merged_prof)
+            p_merged = plots_dir / 'merged_profile_sweetviz.html'
+            merged_report.show_html(str(p_merged), open_browser=False)
+            logger.info("Saved merged sweetviz report: %s", p_merged)
+
+    except Exception as e:
+        logger.exception("Failed to generate sweetviz reports: %s", e)
 
     logger.info('EDA finished. Plots saved to %s', plots_dir)
 
