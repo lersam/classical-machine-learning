@@ -1,15 +1,6 @@
 import pandas as pd
 
 import logging
-import numpy as np
-
-# Backwards-compatibility shim: some versions of Sweetviz expect
-# `np.VisibleDeprecationWarning` which may not exist on newer NumPy
-# distributions. Define it if missing so Sweetviz analysis doesn't crash.
-if not hasattr(np, "VisibleDeprecationWarning"):
-    class VisibleDeprecationWarning(Warning):
-        pass
-    np.VisibleDeprecationWarning = VisibleDeprecationWarning
 
 import sweetviz as sv
 from pathlib import Path

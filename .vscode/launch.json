@@ -16,7 +16,15 @@
             "name": "Eda & Seaborn",
             "type": "debugpy",
             "request": "launch",
-            "module": "home_work.perform_eda_with_seaborn",
+            "module": "home_work.home_work.perform_eda_with_sweetviz",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
+        },
+        {
+            "name": "Eda & Pandas",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "home_work.perform_eda_with_pandas",
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/venv/bin/python"
         }
