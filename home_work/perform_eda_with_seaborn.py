@@ -33,9 +33,30 @@ def perform_eda_with(plots_dir: Optional[Path] = None):
 
     try:
         with engine.connect() as conn:
-            tbls = pd.read_sql_query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()",
-                                     conn)
-            tables = set(tbls['TABLE_NAME'].tolist())
+            # Try MySQL-style INFORMATION_SCHEMA first
+            try:
+                tbls = pd.read_sql_query(
+                    "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()",
+                    conn,
+                )
+                tables = set(tbls['TABLE_NAME'].tolist())
+            except Exception as info_err:
+                logger.debug("information_schema query failed: %s", info_err)
+                # If engine is SQLite, fall back to sqlite_master
+                try:
+                    dialect_name = getattr(engine, "dialect", None) and getattr(engine.dialect, "name", None)
+                    if dialect_name == "sqlite":
+                        tbls = pd.read_sql_query(
+                            "SELECT name AS TABLE_NAME FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+                            conn,
+                        )
+                        tables = set(tbls['TABLE_NAME'].tolist())
+                    else:
+                        # Re-raise so outer exception handler can catch/log
+                        raise
+                except Exception as sqlite_err:
+                    logger.exception("Failed to list tables (info schema and sqlite fallbacks failed): %s", sqlite_err)
+                    return
             if 'ratings' not in tables or 'movies' not in tables:
                 logger.error("Required tables 'ratings' and 'movies' not found in database. Found: %s", tables)
                 return
