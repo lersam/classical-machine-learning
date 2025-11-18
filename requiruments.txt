@@ -11,3 +11,6 @@ pydantic
 sqlalchemy
 sweetviz
 pymysql
+ydata-profiling
+pandas-profiling
+seaborn
