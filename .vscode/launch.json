@@ -8,25 +8,28 @@
             "name": "Read&Load",
             "type": "debugpy",
             "request": "launch",
-            "module": "home_work.movielens_eda_exercise",
+            "module": "movielens_eda_exercise.read_and_load_data",
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/venv/bin/python"
+            "cwd": "${workspaceFolder}/home_work",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe"
         },
         {
             "name": "Eda & Seaborn",
             "type": "debugpy",
             "request": "launch",
-            "module": "home_work.home_work.perform_eda_with_sweetviz",
+            "module": "movielens_eda_exercise.perform_eda_with_sweetviz",
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/venv/bin/python"
+            "cwd": "${workspaceFolder}/home_work",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe"
         },
         {
             "name": "Eda & Pandas",
             "type": "debugpy",
             "request": "launch",
-            "module": "home_work.perform_eda_with_pandas",
+            "module": "movielens_eda_exercise.perform_eda_with_pandas",
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/venv/bin/python"
+            "cwd": "${workspaceFolder}/home_work",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe"
         }
     ]
 }
