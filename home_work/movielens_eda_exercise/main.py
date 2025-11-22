@@ -6,12 +6,13 @@ import pandas as pd
 from pathlib import Path
 from zipfile import ZipFile
 from io import BytesIO
-from home_work.database import engine, Base
-from home_work.models.link import LinksConfiguration
-from home_work.models.movie import MovieConfiguration
-from home_work.models.rating import RatingsConfiguration
-from home_work.models.tag import TagConfiguration
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from movielens_eda_exercise.database import Base, engine
+from movielens_eda_exercise.models.rating import RatingsConfiguration
+from movielens_eda_exercise.models.link import LinksConfiguration
+from movielens_eda_exercise.models.movie import MovieConfiguration
+from movielens_eda_exercise.models.tag import TagConfiguration
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
@@ -104,10 +105,10 @@ if __name__ == "__main__":
 
     # process each model in its own thread: load single csv from zip then save to db
     models = [
-        # MovieConfiguration,
-        RatingsConfiguration
-        # LinksConfiguration,
-        # TagConfiguration
+        MovieConfiguration,
+        RatingsConfiguration,
+        LinksConfiguration,
+        TagConfiguration
         ]
 
     max_workers = min(4, max(1, len(models)))

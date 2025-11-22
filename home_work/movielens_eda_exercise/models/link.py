@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer
 
 from .support import DatasetConfiguration
-from ..database import Base
+from movielens_eda_exercise.database import Base
 
 
 # ============================================================================

@@ -1,24 +1,25 @@
-from sqlalchemy import Column, Integer, Float, PrimaryKeyConstraint
+from sqlalchemy import Column, Integer, String
 
 from .support import DatasetConfiguration
-from ..database import Base
+from movielens_eda_exercise.database import Base
 
 
 # ============================================================================
 # SQLAlchemy ORM Model
 # ============================================================================
 
-class Rating(Base):
-    """SQLAlchemy ORM model for ratings table."""
-    __tablename__ = "ratings"
+class Tag(Base):
+    """SQLAlchemy ORM model for tags table."""
+    __tablename__ = "tags"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=True)
-    movie_id = Column(Integer, nullable=True)
-    rating = Column(Float, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    movie_id = Column(Integer, nullable=False)
+    tag = Column(String(255), nullable=False)
     timestamp = Column(Integer, nullable=False)
+
 
 # ============================================================================
 # Dataset Configuration Dictionaries
 # ============================================================================
-RatingsConfiguration = DatasetConfiguration(name="ratings", inner_path="ml-latest-small/ratings.csv",
-                                            columns=['userId', 'movieId', 'rating', 'timestamp'])
+TagConfiguration = DatasetConfiguration(name="tag", inner_path="ml-latest-small/tags.csv",
+                                        columns=["userId", "movieId", "tag", "timestamp"])

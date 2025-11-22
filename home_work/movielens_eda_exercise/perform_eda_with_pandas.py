@@ -2,7 +2,8 @@ import pandas as pd
 import logging
 from pathlib import Path
 from typing import Optional
-from home_work.database import engine
+
+from movielens_eda_exercise.database import engine
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger()
