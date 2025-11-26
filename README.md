@@ -5,3 +5,9 @@
 
 
 **מהנדסי AI מחזור 4** - <a href="https://drive.google.com/drive/folders/1KKcH5vRt-giHV45kZR0opSdn2ql83hM5" target="_blank" rel="noopener noreferrer">תיקיית משתתפי</a> הקורס
+
+
+homework
+home_work\churn_prediction_exercise
+---
+home_work\clustering_dimentionality_reduction
