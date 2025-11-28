@@ -8,6 +8,4 @@
 
 
 homework
-home_work\churn_prediction_exercise
----
 home_work\clustering_dimentionality_reduction
